@@ -22,6 +22,7 @@ References:
 */
 
 var fs = require('fs');
+var rs = require('restler'); 
 var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
@@ -65,10 +66,26 @@ if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+	.option('-u, --url <url>', 'Path to url to check' )
         .parse(process.argv);
+    if (program.url) {
+	rs.get(program.url).on('complete', function(result){
+	    fs.writeFile(__dirname + 'graderjsUrlfile.txt', result, function(err){
+		if (err) throw err;
+		console.log('saved url as a file to check.');
+		var checkJson = checkHtmlFile(__dirname + 'graderjsUrlfile.txt', program.checks);
+		var outJson = JSON.stringify(checkJson, null, 4);
+		console.log(outJson);
+	    })
+ 	})
+
+    }    else {
     var checkJson = checkHtmlFile(program.file, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
+}
+
+
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
